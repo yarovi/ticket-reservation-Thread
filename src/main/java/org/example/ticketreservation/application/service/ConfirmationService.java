@@ -13,6 +13,7 @@ import org.example.ticketreservation.domain.model.Payment;
 import org.example.ticketreservation.domain.model.Reservation;
 import org.example.ticketreservation.domain.model.Ticket;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -26,15 +27,7 @@ public class ConfirmationService implements ConfirmReservationUseCase {
   private final MetricsPublisher metricsPublisher;
   private final Clock clock;
 
-  public ConfirmationService(
-      ReservationRepository reservationRepository,
-      PaymentRepository paymentRepository,
-      TicketRepository ticketRepository,
-      SeatRepository seatRepository,
-      CodeGenerator codeGenerator,
-      MetricsPublisher metricsPublisher,
-      Clock clock
-  ) {
+  public ConfirmationService(ReservationRepository reservationRepository, PaymentRepository paymentRepository, TicketRepository ticketRepository, SeatRepository seatRepository, CodeGenerator codeGenerator, MetricsPublisher metricsPublisher, Clock clock) {
     this.reservationRepository = reservationRepository;
     this.paymentRepository = paymentRepository;
     this.ticketRepository = ticketRepository;
@@ -47,113 +40,95 @@ public class ConfirmationService implements ConfirmReservationUseCase {
   @Override
   public Ticket confirm(ConfirmReservationCommand command) {
 
-    var reservation = reservationRepository
-        .findByCode(command.reservationCode())
-        .orElseThrow(
-            () -> new ReservationNotFoundException(
-                command.reservationCode()
-            )
-        );
+    var reservation = reservationRepository.findByCode(command.reservationCode()).orElseThrow(() -> new ReservationNotFoundException(command.reservationCode()));
 
-    validatePaymentCode(
-        reservation.paymentCode(),
-        command.paymentCode()
-    );
+    /*
+     * El código recibido debe corresponder con el código
+     * generado cuando se creó la reserva.
+     */
+    validatePaymentCode(reservation.paymentCode(), command.paymentCode());
 
-    if (reservation.status()
-        != ReservationStatus.CONFIRMED) {
+    /*
+     * Solamente una reserva que todavía espera pago puede
+     * pasar por el proceso de confirmación.
+     */
+    if (reservation.status() != ReservationStatus.PENDING_PAYMENT) {
 
-      throw new ReservationNotConfirmedException(
-          reservation.reservationCode()
-      );
+      throw new IllegalStateException("La reserva no se encuentra pendiente de pago");
     }
 
+    /*
+     * Primero comprobamos expiración.
+     * Si han pasado más de 30 minutos:
+     *
+     * Reservation -> EXPIRED
+     * Seat        -> AVAILABLE
+     * Payment     -> NO se crea
+     * Ticket      -> NO se crea
+     */
     if (reservation.isExpired(clock)) {
-      expireReservation(
-          reservation.id(),
-          reservation.seatId(),
-          reservation.reservationCode()
-      );
+      expireReservation(reservation.id(), reservation.seatId(), reservation.reservationCode());
     }
+
+    validateAmount(command.amount());
 
     var now = Instant.now(clock);
 
-    var payment = new Payment(
-        null,
-        reservation.id(),
-        command.paymentCode(),
-        command.paymentMethod(),
-        command.amount(),
-        PaymentStatus.PAID,
-        now
-    );
+    var payment = new Payment(null, reservation.id(), command.paymentCode(), command.paymentMethod(), command.amount(), PaymentStatus.PAID, now);
 
     paymentRepository.save(payment);
 
-    reservationRepository.updateStatus(
-        reservation.id(),
-        ReservationStatus.CONFIRMED
-    );
+    /*
+     * Una vez registrado correctamente el pago,
+     * confirmamos la reserva.
+     */
+    reservationRepository.updateStatus(reservation.id(), ReservationStatus.CONFIRMED);
 
-    seatRepository.markAsSold(
-        reservation.seatId()
-    );
+    /*
+     * El asiento deja definitivamente de estar
+     * reservado y pasa a vendido.
+     */
+    seatRepository.markAsSold(reservation.seatId());
 
-    var ticket = new Ticket(
-        null,
-        codeGenerator.ticketCode(),
-        reservation.id(),
-        now
-    );
+    /*
+     * El ticket se genera solamente después
+     * de confirmar correctamente el pago.
+     */
+    var ticket = new Ticket(null, codeGenerator.ticketCode(), reservation.id(), now);
 
-    var savedTicket =
-        ticketRepository.save(ticket);
+    var savedTicket = ticketRepository.save(ticket);
 
-    metricsPublisher.increment(
-        "reservation.confirmed"
-    );
+    metricsPublisher.increment("reservation.confirmed");
 
-    metricsPublisher.increment(
-        "payment.confirmed"
-    );
+    metricsPublisher.increment("payment.confirmed");
 
     return savedTicket;
   }
 
-  @Override
-  public List<Reservation> findByStatus(ReservationStatus status) {
-    return List.of();
-  }
+  private void validatePaymentCode(String expected, String received) {
 
-  private void validatePaymentCode(
-      String expected,
-      String received
-  ) {
     if (!expected.equals(received)) {
       throw new InvalidPaymentCodeException();
     }
   }
 
-  private void expireReservation(
-      Long reservationId,
-      Long seatId,
-      String reservationCode
-  ) {
+  private void validateAmount(BigDecimal amount) {
 
-    reservationRepository.updateStatus(
-        reservationId,
-        ReservationStatus.EXPIRED
-    );
+    if (amount == null || amount.signum() <= 0) {
+
+      throw new IllegalArgumentException("El monto debe ser mayor que cero");
+    }
+  }
+
+  private void expireReservation(Long reservationId, Long seatId, String reservationCode) {
+
+    reservationRepository.updateStatus(reservationId, ReservationStatus.EXPIRED);
 
     seatRepository.release(seatId);
 
-    metricsPublisher.increment(
-        "reservation.expired"
-    );
+    metricsPublisher.increment("reservation.expired");
 
-    throw new ReservationExpiredException(
-        reservationCode
-    );
+    throw new ReservationExpiredException(reservationCode);
   }
 
 }

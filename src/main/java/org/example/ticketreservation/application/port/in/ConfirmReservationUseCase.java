@@ -10,5 +10,4 @@ import java.util.List;
 public interface ConfirmReservationUseCase {
   Ticket confirm(ConfirmReservationCommand command);
 
-  List<Reservation> findByStatus(ReservationStatus status);
 }

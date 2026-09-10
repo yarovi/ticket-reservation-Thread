@@ -8,6 +8,7 @@ import org.example.ticketreservation.domain.enums.ReservationStatus;
 import org.example.ticketreservation.domain.model.Reservation;
 import org.example.ticketreservation.domain.model.Ticket;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -122,4 +123,67 @@ public class ConfirmationServiceTest {
         metricsPublisher
     ).increment("reservation.confirmed");
   }
+
+  @Disabled
+  void shouldExpireReservationAndReleaseSeat() {
+
+    var reservation = new Reservation(
+        1L,
+        "RSV-123",
+        "AB12CD34EF",
+        10L,
+        20L,
+        30L,
+        ReservationStatus.PENDING_PAYMENT,
+
+        Instant.parse(
+            "2026-09-09T14:00:00Z"
+        ),
+
+        Instant.parse(
+            "2026-09-09T14:30:00Z"
+        )
+    );
+
+    when(
+        reservationRepository.findByCode("RSV-123")
+    ).thenReturn(
+        Optional.of(reservation)
+    );
+
+    var command =
+        new ConfirmReservationCommand(
+            "RSV-123",
+            "AB12CD34EF",
+            PaymentMethod.MOVIL,
+            new BigDecimal("80.00")
+        );
+
+    org.junit.jupiter.api.Assertions.assertThrows(
+        org.example.ticketreservation.domain.exception
+            .ReservationExpiredException.class,
+        () -> confirmationService.confirm(command)
+    );
+
+    verify(
+        reservationRepository
+    ).updateStatus(
+        1L,
+        ReservationStatus.EXPIRED
+    );
+
+    verify(
+        seatRepository
+    ).release(30L);
+
+    verifyNoInteractions(
+        paymentRepository
+    );
+
+    verifyNoInteractions(
+        ticketRepository
+    );
+  }
+
 }
+
