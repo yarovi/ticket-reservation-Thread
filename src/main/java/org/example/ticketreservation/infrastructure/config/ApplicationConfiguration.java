@@ -4,8 +4,13 @@ package org.example.ticketreservation.infrastructure.config;
 import org.example.ticketreservation.application.port.in.*;
 import org.example.ticketreservation.application.port.out.*;
 import org.example.ticketreservation.application.service.*;
+import org.example.ticketreservation.domain.exception.ReservationExpiredException;
+import org.example.ticketreservation.domain.model.Ticket;
+import org.example.ticketreservation.infrastructure.ConfirmationTransactionResult;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Clock;
 
@@ -37,9 +42,10 @@ public class ApplicationConfiguration {
       CodeGenerator codeGenerator,
       MetricsPublisher metricsPublisher,
       Clock clock,
-      ReservationProperties reservationProperties
+      ReservationProperties reservationProperties,
+      TransactionTemplate transactionTemplate
   ) {
-    return new ReservationService(
+    var service = new ReservationService(
         customerRepository,
         tripRepository,
         seatRepository,
@@ -49,6 +55,11 @@ public class ApplicationConfiguration {
         clock,
         reservationProperties.expiration()
     );
+
+    return command ->
+        transactionTemplate.execute(
+            status -> service.reserve(command)
+        );
   }
 
   @Bean
@@ -59,9 +70,10 @@ public class ApplicationConfiguration {
       SeatRepository seatRepository,
       CodeGenerator codeGenerator,
       MetricsPublisher metricsPublisher,
-      Clock clock
+      Clock clock,
+      TransactionTemplate transactionTemplate
   ) {
-    return new ConfirmationService(
+    var service = new ConfirmationService(
         reservationRepository,
         paymentRepository,
         ticketRepository,
@@ -70,19 +82,78 @@ public class ApplicationConfiguration {
         metricsPublisher,
         clock
     );
+
+    return command -> {
+
+      ConfirmationTransactionResult result =
+          transactionTemplate.execute(status -> {
+
+            try {
+
+              Ticket ticket = service.confirm(command);
+
+              return ConfirmationTransactionResult.success(
+                  ticket
+              );
+
+            } catch (ReservationExpiredException exception) {
+
+              /*
+               * IMPORTANTE:
+               *
+               * No propagamos todavía la excepción.
+               *
+               * El servicio ya realizó:
+               *
+               * Reservation -> EXPIRED
+               * Seat        -> AVAILABLE
+               *
+               * Queremos permitir que la transacción
+               * haga COMMIT.
+               */
+              return ConfirmationTransactionResult.expired(
+                  exception
+              );
+            }
+          });
+
+      if (result == null) {
+        throw new IllegalStateException(
+            "No fue posible ejecutar la confirmación"
+        );
+      }
+
+      /*
+       * En este punto la transacción ya terminó.
+       *
+       * Si la reserva había expirado,
+       * ahora sí devolvemos el error de negocio.
+       */
+      if (result.expirationException() != null) {
+        throw result.expirationException();
+      }
+
+      return result.ticket();
+    };
   }
 
   @Bean
   public CancelReservationUseCase cancelReservationUseCase(
       ReservationRepository reservationRepository,
       SeatRepository seatRepository,
-      MetricsPublisher metricsPublisher
+      MetricsPublisher metricsPublisher,
+      TransactionTemplate transactionTemplate
   ) {
-    return new CancelReservationService(
+    var service = new CancelReservationService(
         reservationRepository,
         seatRepository,
         metricsPublisher
     );
+
+    return reservationCode ->
+        transactionTemplate.execute(
+            status -> service.cancel(reservationCode)
+        );
   }
 
   @Bean
@@ -126,5 +197,11 @@ public class ApplicationConfiguration {
     );
   }
 
+  @Bean
+  public TransactionTemplate transactionTemplate(
+      PlatformTransactionManager transactionManager
+  ) {
+    return new TransactionTemplate(transactionManager);
+  }
 
 }
