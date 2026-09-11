@@ -46,8 +46,8 @@ public class CheckInServiceTest {
     );
 
     service = new CheckInService(
-        ticketRepository,
         reservationRepository,
+        ticketRepository,
         seatRepository,
         checkInRepository,
         eventPublisher,

@@ -24,8 +24,8 @@ public class CheckInService implements CheckInUseCase {
   private final Clock clock;
 
   public CheckInService(
-      TicketRepository ticketRepository,
       ReservationRepository reservationRepository,
+      TicketRepository ticketRepository,
       SeatRepository seatRepository,
       CheckInRepository checkInRepository,
       CheckInEventPublisher eventPublisher,

@@ -39,7 +39,7 @@ Este documento resume las clases implementadas, las pendientes y los puntos que 
 | Paquete | Clase | Rol | Observación |
 |---|---|---|---|
 | `org.example.boostrap` | `ApplicationConfiguration` | Composition root | Crea los repositorios reales y el servicio. Tiene sentido como punto de wiring. |
-| `org.example.infraestructure.config` | `ConnectionFactory` | Adaptador de conexión JDBC | Cumple su propósito, pero introduce una dependencia concreta de infraestructura dentro del servicio. |
+| `org.example.infraestructure.config` | `QueryProperties` | Adaptador de conexión JDBC | Cumple su propósito, pero introduce una dependencia concreta de infraestructura dentro del servicio. |
 | `org.example.infraestructure.database` | `JdbcTicketRepository` | Adaptador JDBC para tickets | Implementa `findBySeat` y `update`. |
 | `org.example.infraestructure.repository` | `JdbcReservationRepository` | Adaptador JDBC para reservas | Implementa `save(...)` y retorna la reserva creada. |
 | `org.example.infraestructure.metric` | `ConsoleMetricsPublisher` | Adaptador de métricas | Es un adaptador simple y funcional. |
@@ -97,7 +97,7 @@ Este documento resume las clases implementadas, las pendientes y los puntos que 
 ### Lo que no está alineado
 
 1. Dependencia del servicio a infraestructura
-   - `ReservationService` depende directamente de `ConnectionFactory`, que es una clase concreta del paquete `infraestructure`.
+   - `ReservationService` depende directamente de `QueryProperties`, que es una clase concreta del paquete `infraestructure`.
    - En hexagonal, el servicio de aplicación no debería conocer la tecnología de conexión ni el detalle de JDBC.
    - La transacción debería estar encapsulada en un adaptador o un caso de uso más técnico, no en el servicio de negocio.
 
