@@ -100,7 +100,7 @@ public class ReservationService implements ReserveTicketUseCase{
   }
 
   private void validateTrip(Long tripId) {
-    tripRepository.findByTrip(tripId)
+    tripRepository.findById(tripId)
         .orElseThrow(
             () -> new TripNotFoundException(tripId)
         );

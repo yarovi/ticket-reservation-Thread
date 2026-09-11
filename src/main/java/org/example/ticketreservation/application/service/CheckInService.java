@@ -98,7 +98,7 @@ public class CheckInService implements CheckInUseCase {
   private void checkAlreadyProcessed(String ticketCode) {
 
     checkInRepository
-        .findByTicketCode(ticketCode)
+        .findByReservationCode(ticketCode)
         .ifPresent(existing -> {
           throw new PassengerAlreadyCheckedInException(
               ticketCode

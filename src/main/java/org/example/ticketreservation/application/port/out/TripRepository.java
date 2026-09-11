@@ -5,5 +5,5 @@ import org.example.ticketreservation.domain.model.Trip;
 import java.util.Optional;
 
 public interface TripRepository {
-  Optional<Trip> findByTrip(Long id);
+  Optional<Trip> findById(Long id);
 }

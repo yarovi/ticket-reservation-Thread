@@ -98,7 +98,7 @@ public class CheckInServiceTest {
     );
 
     when(
-        checkInRepository.findByTicketCode("TKT-999")
+        checkInRepository.findByReservationCode("TKT-999")
     ).thenReturn(
         Optional.empty()
     );

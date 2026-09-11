@@ -113,7 +113,7 @@ public class ReservationServiceTest {
     );
 
     when(
-        tripRepository.findByTrip(10L)
+        tripRepository.findById(10L)
     ).thenReturn(
         Optional.of(trip)
     );
@@ -221,7 +221,7 @@ public class ReservationServiceTest {
     );
 
     when(
-        tripRepository.findByTrip(10L)
+        tripRepository.findById(10L)
     ).thenReturn(
         Optional.of(trip)
     );
@@ -285,7 +285,7 @@ public class ReservationServiceTest {
 
     assertThrows(
 
-            ReservationExpiredException.class,
+        ReservationExpiredException.class,
         () -> confirmationService.confirm(command)
     );
 

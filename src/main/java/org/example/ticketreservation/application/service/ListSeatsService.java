@@ -21,7 +21,7 @@ public class ListSeatsService implements ListSeatUseCase {
   @Override
   public List<Seat> findByTrip(Long tripId) {
 
-    tripRepository.findByTrip(tripId)
+    tripRepository.findById(tripId)
         .orElseThrow(
             () -> new TripNotFoundException(tripId)
         );

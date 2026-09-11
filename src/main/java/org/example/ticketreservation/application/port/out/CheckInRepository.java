@@ -8,5 +8,5 @@ public interface CheckInRepository {
 
   CheckIn save(CheckIn checkIn);
 
-  Optional<CheckIn> findByTicketCode(String ticketCode);
+  Optional<CheckIn> findByReservationCode(String reservationCode);
 }
