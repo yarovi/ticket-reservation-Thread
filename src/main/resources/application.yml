@@ -20,6 +20,9 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI}/ticket_reservation
+  cloud:
+    gcp:
+      project-id: ${GCP_PROJECT_ID:ticket-reservation-local}
 
 management:
   endpoints:
@@ -42,5 +45,5 @@ server:
   port: ${SERVER_PORT:8080}
 
 pubsub:
-  project-id: ${PUBSUB_PROJECT_ID:ticket-reservation-local}
-  topic-id: ${PUBSUB_TOPIC_ID:passenger-checked-in}
+  topic: ${PUBSUB_TOPIC_ID:passenger-checked-in}
+  subscription: ${PUBSUB_SUBSCRIPTION_ID:passenger-checked-in-subscription}
