@@ -1,4 +1,4 @@
-package org.example.ticketreservation.infrastructure.adapter.out.messaging.pushpub;
+package org.example.ticketreservation.infrastructure.adapter.out.messaging.pubsub;
 
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;

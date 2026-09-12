@@ -17,11 +17,12 @@ import java.util.Properties;
 public class JdbcTicketRepository implements TicketRepository {
 
   private final JdbcTemplate jdbcTemplate;
+  @Qualifier("ticketQueries")
   private final Properties ticketQueries;
 
   public JdbcTicketRepository(
       JdbcTemplate jdbcTemplate,
-      @Qualifier("ticketQueries") Properties ticketQueries
+      Properties ticketQueries
   ) {
     this.jdbcTemplate = jdbcTemplate;
     this.ticketQueries = ticketQueries;

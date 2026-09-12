@@ -19,11 +19,12 @@ import java.util.Properties;
 public class JdbcPaymentRepository implements PaymentRepository {
 
   private final JdbcTemplate jdbcTemplate;
+  @Qualifier("paymentQueries")
   private final Properties paymentQueries;
 
   public JdbcPaymentRepository(
       JdbcTemplate jdbcTemplate,
-      @Qualifier("paymentQueries") Properties paymentQueries
+      Properties paymentQueries
   ) {
     this.jdbcTemplate = jdbcTemplate;
     this.paymentQueries = paymentQueries;

@@ -18,11 +18,12 @@ import java.util.List;
 public class JdbcSeatRepository implements SeatRepository {
 
   private final JdbcTemplate jdbcTemplate;
+  @Qualifier("seatQueries")
   private final Properties seatQueries;
 
   public JdbcSeatRepository(
       JdbcTemplate jdbcTemplate,
-      @Qualifier("seatQueries") Properties seatQueries
+      Properties seatQueries
   ) {
     this.jdbcTemplate = jdbcTemplate;
     this.seatQueries = seatQueries;

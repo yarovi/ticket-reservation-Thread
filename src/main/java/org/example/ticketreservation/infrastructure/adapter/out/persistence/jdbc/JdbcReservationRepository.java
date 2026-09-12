@@ -20,11 +20,12 @@ import java.util.List;
 public class JdbcReservationRepository implements ReservationRepository {
 
   private final JdbcTemplate jdbcTemplate;
+  @Qualifier("reservationQueries")
   private final Properties reservationQueries;
 
   public JdbcReservationRepository(
       JdbcTemplate jdbcTemplate,
-      @Qualifier("reservationQueries") Properties reservationQueries
+       Properties reservationQueries
   ) {
     this.jdbcTemplate = jdbcTemplate;
     this.reservationQueries = reservationQueries;
