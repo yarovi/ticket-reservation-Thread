@@ -1,5 +1,6 @@
 package org.example.ticketreservation.infrastructure.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,9 +10,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+@Slf4j
+@Configuration
 public class QueryConfiguration {
   @Bean("customerQueries")
   public Properties customerQueries() throws IOException {
+    String path = "queries/customer-queries.properties";
+
+    log.info(
+        "Cargando queries de customer desde classpath:{}",
+        path
+    );
     return loadProperties(
         "queries/customer-queries.properties",
         "Customer"

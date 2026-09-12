@@ -1,28 +1,20 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: ticket-reservation
-
+  mongodb:
+    uri: ${MONGODB_URI}
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/ticket_reservation}
-    username: ${DB_USERNAME:ticket_user}
-    password: ${DB_PASSWORD:ticket_password}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-    sql:
-      init:
-        mode: always
-        schema-locations: classpath:db/schema.sql
 
-    threads:
-      virtual:
-        enabled: true
-
-  data:
-    mongodb:
-      uri: ${MONGODB_URI}/ticket_reservation
   cloud:
     gcp:
-      project-id: ${GCP_PROJECT_ID:ticket-reservation-local}
+      project-id: ${PUBSUB_PROJECT_ID}
 
 management:
   endpoints:
@@ -45,5 +37,12 @@ server:
   port: ${SERVER_PORT:8080}
 
 pubsub:
-  topic: ${PUBSUB_TOPIC_ID:passenger-checked-in}
-  subscription: ${PUBSUB_SUBSCRIPTION_ID:passenger-checked-in-subscription}
+  project-id: ${PUBSUB_PROJECT_ID}
+  topic-id: ${PUBSUB_TOPIC_ID}
+  #subscription: ${PUBSUB_SUBSCRIPTION_ID:passenger-checked-in-subscription}
+
+logging:
+  level:
+    org.example.ticketreservation: DEBUG
+    com.zaxxer.hikari: DEBUG
+    org.springframework.jdbc.core: DEBUG
