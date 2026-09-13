@@ -1,0 +1,48 @@
+INSERT INTO transports (code, company, plate)
+VALUES ('BUS-001', 'Andes Express', 'ABC-101'),
+       ('BUS-002', 'Pacific Bus', 'ABC-102'),
+       ('BUS-003', 'Sur Express', 'ABC-103'),
+       ('BUS-004', 'Imperial Travel', 'ABC-104');
+
+INSERT INTO transports (code, company, plate)
+VALUES ('BUS-001', 'Andes Express', 'ABC-101'),
+       ('BUS-002', 'Pacific Bus', 'ABC-102'),
+       ('BUS-003', 'Sur Express', 'ABC-103'),
+       ('BUS-004', 'Imperial Travel', 'ABC-104');
+
+INSERT INTO trips (origin,
+                   destination,
+                   transport_id,
+                   departure_at)
+VALUES ('Arequipa',
+        'Lima',
+        (SELECT id FROM transports WHERE code = 'BUS-001'),
+        '2026-09-20 20:00:00'),
+       ('Lima',
+        'Arequipa',
+        (SELECT id FROM transports WHERE code = 'BUS-001'),
+        '2026-09-22 19:30:00'),
+       ('Arequipa',
+        'Cusco',
+        (SELECT id FROM transports WHERE code = 'BUS-002'),
+        '2026-09-21 21:00:00'),
+       ('Cusco',
+        'Arequipa',
+        (SELECT id FROM transports WHERE code = 'BUS-002'),
+        '2026-09-23 20:30:00'),
+       ('Arequipa',
+        'Tacna',
+        (SELECT id FROM transports WHERE code = 'BUS-003'),
+        '2026-09-20 08:00:00'),
+       ('Tacna',
+        'Arequipa',
+        (SELECT id FROM transports WHERE code = 'BUS-003'),
+        '2026-09-20 15:00:00'),
+       ('Lima',
+        'Trujillo',
+        (SELECT id FROM transports WHERE code = 'BUS-004'),
+        '2026-09-21 22:00:00'),
+       ('Trujillo',
+        'Lima',
+        (SELECT id FROM transports WHERE code = 'BUS-004'),
+        '2026-09-22 21:00:00');

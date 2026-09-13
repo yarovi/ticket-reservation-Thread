@@ -1,5 +1,6 @@
 package org.example.ticketreservation.infrastructure.adapter.in.rest;
 
+import org.example.ticketreservation.application.command.ConfirmReservationCommand;
 import org.example.ticketreservation.application.command.CreateReservationCommand;
 import org.example.ticketreservation.application.port.in.CancelReservationUseCase;
 import org.example.ticketreservation.application.port.in.ConfirmReservationUseCase;
@@ -7,7 +8,9 @@ import org.example.ticketreservation.application.port.in.ReserveTicketUseCase;
 import org.example.ticketreservation.application.port.in.SearchReservationUseCase;
 import org.example.ticketreservation.domain.enums.ReservationStatus;
 import org.example.ticketreservation.domain.model.Reservation;
+import org.example.ticketreservation.domain.model.Ticket;
 import org.example.ticketreservation.infrastructure.adapter.in.rest.assembler.ReservationResponseAssembler;
+import org.example.ticketreservation.infrastructure.adapter.in.rest.request.ConfirmReservationRequest;
 import org.example.ticketreservation.infrastructure.adapter.in.rest.request.CreateReservationRequest;
 import org.example.ticketreservation.infrastructure.adapter.in.rest.response.ReservationResponse;
 import org.springframework.hateoas.CollectionModel;
@@ -29,7 +32,7 @@ public class ReservationController {
   private final SearchReservationUseCase searchReservationUseCase;
   private final CancelReservationUseCase cancelReservationUseCase;
 
-  //private final ConfirmReservationUseCase confirmReservationUseCase;
+  private final ConfirmReservationUseCase confirmReservationUseCase;
 
   private final ReservationResponseAssembler assembler;
 
@@ -37,13 +40,13 @@ public class ReservationController {
       ReserveTicketUseCase reserveTicketUseCase,
       SearchReservationUseCase searchReservationUseCase,
       CancelReservationUseCase cancelReservationUseCase,
-      //ConfirmReservationUseCase confirmReservationUseCase,
+      ConfirmReservationUseCase confirmReservationUseCase,
       ReservationResponseAssembler assembler
   ) {
     this.reserveTicketUseCase = reserveTicketUseCase;
     this.searchReservationUseCase = searchReservationUseCase;
     this.cancelReservationUseCase = cancelReservationUseCase;
-    //this.confirmReservationUseCase = confirmReservationUseCase;
+    this.confirmReservationUseCase = confirmReservationUseCase;
     this.assembler = assembler;
   }
 
@@ -213,6 +216,24 @@ public class ReservationController {
   }
 
 
+  @PostMapping("/{reservationCode}/confirmation")
+  public ResponseEntity<Ticket> confirm(
+      @PathVariable String reservationCode,
+      @RequestBody ConfirmReservationRequest request
+  ) {
+
+    var command = new ConfirmReservationCommand(
+        reservationCode,
+        request.paymentCode(),
+        request.paymentMethod(),
+        request.amount()
+    );
+
+    Ticket ticket =
+        confirmReservationUseCase.confirm(command);
+
+    return ResponseEntity.ok(ticket);
+  }
 
 
 
