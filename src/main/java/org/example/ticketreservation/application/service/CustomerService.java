@@ -50,7 +50,7 @@ public class CustomerService implements CreateCustomerUseCase, ManageCustomerUse
 
   @Override
   public Optional<Customer> findById(Long customerId) {
-    return Optional.empty();
+    return  customerRepository.findById(customerId);
   }
 
   @Override
